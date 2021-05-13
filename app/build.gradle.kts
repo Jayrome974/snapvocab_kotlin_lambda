@@ -6,6 +6,8 @@
  * User Manual available at https://docs.gradle.org/7.0/userguide/building_java_projects.html
  */
 
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.4.31"
@@ -27,14 +29,26 @@ dependencies {
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+")
+    implementation("io.arrow-kt:arrow-core:0.13.2")
+
     // This dependency is used by the application.
-    implementation("com.google.guava:guava:30.0-jre")
+//    implementation("com.google.guava:guava:30.0-jre")
 
-    // Use the Kotlin test library.
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation(platform("org.junit:junit-bom:5.7.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+}
 
-    // Use the Kotlin JUnit integration.
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
+// config JVM target to 1.8 for kotlin compilation tasks
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = "11"
 }
 
 application {

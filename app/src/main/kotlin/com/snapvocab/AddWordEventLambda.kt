@@ -3,9 +3,70 @@
  */
 package com.snapvocab
 
-class AddWordEventLambda {
-    fun handler(): ApiGatewayResponse {
-        return ApiGatewayResponse(200, "Success!!!")
+import arrow.core.Either
+import arrow.core.Option
+import arrow.core.filterOrElse
+import arrow.core.getOrHandle
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import java.util.*
+
+const val STATUS_CODE_OK = 200
+const val STATUS_CODE_KO = 400
+const val NEW_WORD_NB_OCCURRENCES = 1
+const val WORD_NB_OCCURRENCES_INCREMENT_VALUE = 1
+
+data class AddWordEvent(val word: String)
+data class ApiGatewayRequest(val body: String, val pathParameters: Map<String, String>)
+data class ApiGatewayResponse(val statusCode: Int, val body: String = "")
+
+sealed class HandlerProblem {
+    object NoWordFound : HandlerProblem()
+    object NotParsableRequest : HandlerProblem()
+}
+
+typealias FindWord = (String) -> Option<Word>
+typealias SaveWord = (Word) -> Word
+
+class AddWordEventLambda(
+    private val findWord: FindWord = ::findWordInDatabase,
+    private val saveWord: SaveWord = ::saveWordInDatabase
+) {
+
+    fun handler(request: ApiGatewayRequest): ApiGatewayResponse {
+        val wordValue = parse(request)
+            .filterOrElse({ it.isNotBlank() }, { HandlerProblem.NoWordFound })
+            .getOrHandle {
+                return when (it) {
+                    is HandlerProblem.NotParsableRequest -> invalidRequestResponse("Invalid request")
+                    else -> invalidRequestResponse("No word found")
+                }
+            }
+
+        return findWord(wordValue)
+            .fold({ newWordWith(wordValue) }, { incrementWordNbOccurrences(it) })
+            .let(saveWord)
+            .let { successfulResponse() }
+    }
+
+    private fun successfulResponse() = ApiGatewayResponse(STATUS_CODE_OK)
+
+    private fun invalidRequestResponse(message: String) = ApiGatewayResponse(STATUS_CODE_KO, message)
+
+    private fun incrementWordNbOccurrences(word: Word) =
+        word.copy(nbOccurrences = word.nbOccurrences + WORD_NB_OCCURRENCES_INCREMENT_VALUE)
+
+    private fun newWordWith(wordValue: String) =
+        Word(UUID.randomUUID().toString(), wordValue, NEW_WORD_NB_OCCURRENCES)
+
+    private fun parse(request: ApiGatewayRequest): Either<HandlerProblem, String> {
+        return Either.catch {
+            jacksonObjectMapper().readValue<AddWordEvent>(request.body).word
+        }.mapLeft {
+            HandlerProblem.NotParsableRequest
+        }
     }
 }
+
+
 
