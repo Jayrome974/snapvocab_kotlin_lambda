@@ -6,6 +6,7 @@
  * User Manual available at https://docs.gradle.org/7.0/userguide/building_java_projects.html
  */
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -32,9 +33,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+")
     implementation("io.arrow-kt:arrow-core:0.13.2")
 
-    // This dependency is used by the application.
-//    implementation("com.google.guava:guava:30.0-jre")
-
     testImplementation(platform("org.junit:junit-bom:5.7.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
@@ -49,6 +47,10 @@ tasks.named<Test>("test") {
 // config JVM target to 1.8 for kotlin compilation tasks
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "11"
+}
+
+tasks.withType<ShadowJar>().configureEach {
+    archiveFileName.set("snapvocab_kotlin_lambda.jar")
 }
 
 application {
