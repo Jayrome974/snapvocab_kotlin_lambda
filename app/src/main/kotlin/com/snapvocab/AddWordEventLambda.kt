@@ -17,8 +17,8 @@ const val NEW_WORD_NB_OCCURRENCES = 1
 const val WORD_NB_OCCURRENCES_INCREMENT_VALUE = 1
 
 data class AddWordEvent(val word: String)
-data class ApiGatewayRequest(val body: String, val pathParameters: Map<String, String>)
 data class ApiGatewayResponse(val statusCode: Int, val body: String = "")
+data class ApiGatewayRequest(var body: String = "")
 
 sealed class HandlerProblem {
     object NoWordFound : HandlerProblem()

@@ -3,6 +3,9 @@ package com.snapvocab
 import arrow.core.Option
 import arrow.core.Some
 import arrow.core.none
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -10,25 +13,33 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Files
 import java.nio.file.Path
 
-const val REQUEST_BODY_WITH_WORD_AMAZING_FILENAME = "request_body_with_word_amazing.json"
+const val ADD_WORD_AMAZING_REQUEST_FILENAME = "add_word_amazing_request.json"
 const val WORD_AMAZING = "amazing"
 
 class AddWordEventLambdaUnitTest {
     @Test
     fun givenAddNewWordRequestThenWordIsCreatedAndSuccessfulResponseIsReturned() {
         AddWordEventLambda(::findNewWordAmazingSpy, ::saveNewWordAmazingSpy).handler(
-            addWordRequestWith(REQUEST_BODY_WITH_WORD_AMAZING_FILENAME)
+            addWordRequestFrom(ADD_WORD_AMAZING_REQUEST_FILENAME)
         ).apply {
             Assertions.assertEquals(successfulResponse(), this)
         }
     }
 
-    private fun addWordRequestWith(requestBodyFilename: String): ApiGatewayRequest {
-        return resolve(requestBodyFilename).let {
+    private fun addWordRequestFrom(requestFilename: String): ApiGatewayRequest {
+        return resolve(requestFilename).let {
             Files.readString(it)
         }.let {
-            ApiGatewayRequest(it, emptyMap())
+            parse(it)
         }
+    }
+
+    private fun parse(requestAsJson: String): ApiGatewayRequest {
+        val objectMapper = jacksonObjectMapper().configure(
+            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+            false
+        )
+        return objectMapper.readValue(requestAsJson)
     }
 
     private fun resolve(requestBodyFilename: String): Path =
@@ -49,20 +60,20 @@ class AddWordEventLambdaUnitTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["request_body_empty_1.json", "request_body_empty_2.json", "request_body_with_no_word.json"])
-    fun givenInvalidAddWordRequestThenInvalidRequestResponseIsReturned(invalidRequestBodyFilename: String) {
+    @ValueSource(strings = ["empty_add_word_request.json", "add_no_word_request.json"])
+    fun givenInvalidAddWordRequestThenInvalidRequestResponseIsReturned(invalidRequestFilename: String) {
         AddWordEventLambda().handler(
-            addWordRequestWith(invalidRequestBodyFilename)
+            addWordRequestFrom(invalidRequestFilename)
         ).apply {
             Assertions.assertEquals(invalidRequestResponse(), this)
         }
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["request_body_with_empty_word_1.json", "request_body_with_empty_word_2.json"])
-    fun givenAddEmptyWordRequestThenNoWordFoundResponseIsReturned(invalidRequestBodyFilename: String) {
+    @ValueSource(strings = ["add_empty_word_request_1.json", "add_empty_word_request_2.json"])
+    fun givenAddEmptyWordRequestThenNoWordFoundResponseIsReturned(emptyWordRequestFilename: String) {
         AddWordEventLambda().handler(
-            addWordRequestWith(invalidRequestBodyFilename)
+            addWordRequestFrom(emptyWordRequestFilename)
         ).apply {
             Assertions.assertEquals(noWordFoundResponse(), this)
         }
@@ -75,7 +86,7 @@ class AddWordEventLambdaUnitTest {
     @Test
     fun givenAddExistingWordRequestThenWordNbOccurrencesIsIncrementedAndSuccessfulResponseIsReturned() {
         AddWordEventLambda(::findExistingWordAmazingSpy, ::saveExistingWordAmazingSpy).handler(
-            addWordRequestWith(REQUEST_BODY_WITH_WORD_AMAZING_FILENAME)
+            addWordRequestFrom(ADD_WORD_AMAZING_REQUEST_FILENAME)
         ).apply {
             Assertions.assertEquals(successfulResponse(), this)
         }
