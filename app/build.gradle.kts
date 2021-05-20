@@ -30,12 +30,20 @@ dependencies {
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+")
     implementation("io.arrow-kt:arrow-core:0.13.2")
+
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+")
+
+    implementation(platform("software.amazon.awssdk:bom:2.16.63"))
+    implementation("software.amazon.awssdk:dynamodb")
+    implementation("software.amazon.awssdk:dynamodb-enhanced")
+    implementation("ch.qos.logback:logback-classic:1.2.3")
 
     testImplementation(platform("org.junit:junit-bom:5.7.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
+
+
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
@@ -44,7 +52,7 @@ tasks.named<Test>("test") {
     }
 }
 
-// config JVM target to 1.8 for kotlin compilation tasks
+// config JVM target to 11 for kotlin compilation tasks
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "11"
 }

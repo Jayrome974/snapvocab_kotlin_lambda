@@ -52,11 +52,10 @@ class AddWordEventLambdaUnitTest {
         return none()
     }
 
-    private fun saveNewWordAmazingSpy(word: Word): Word {
+    private fun saveNewWordAmazingSpy(word: Word) {
         Assertions.assertFalse(word.id.isBlank())
         Assertions.assertEquals(WORD_AMAZING, word.value)
         Assertions.assertEquals(1, word.nbOccurrences)
-        return word
     }
 
     @ParameterizedTest
@@ -97,9 +96,8 @@ class AddWordEventLambdaUnitTest {
         return Some(Word("id", wordValue, 2))
     }
 
-    private fun saveExistingWordAmazingSpy(word: Word): Word {
+    private fun saveExistingWordAmazingSpy(word: Word) {
         Assertions.assertEquals(WORD_AMAZING, word.value)
         Assertions.assertEquals(3, word.nbOccurrences)
-        return word
     }
 }

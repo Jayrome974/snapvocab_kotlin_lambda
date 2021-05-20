@@ -26,7 +26,7 @@ sealed class HandlerProblem {
 }
 
 typealias FindWord = (String) -> Option<Word>
-typealias SaveWord = (Word) -> Word
+typealias SaveWord = (Word) -> Unit
 
 class AddWordEventLambda(
     private val findWord: FindWord = ::findWordInDatabase,
