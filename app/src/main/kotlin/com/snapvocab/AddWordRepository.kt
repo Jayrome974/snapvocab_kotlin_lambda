@@ -27,7 +27,6 @@ val wordsTable: DynamoDbAsyncTable<Word> =
         )
 
 fun findWordInDatabase(wordValue: String): Option<Word> {
-    // TODO handle exception
     var foundWord: Option<Word> = none()
 
     wordsTable
@@ -50,6 +49,7 @@ private fun expressionValueEquals(wordValue: String): Expression =
         .build()
 
 fun saveWordInDatabase(word: Word) {
-    // TODO handle exception
-    wordsTable.putItem(word).join()
+    wordsTable
+        .putItem(word)
+        .join()
 }
